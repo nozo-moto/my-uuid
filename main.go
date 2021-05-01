@@ -10,11 +10,18 @@ import (
 type UUID [16]byte // 128bit
 
 func main() {
-	rander := rand.Reader
-	var uuid UUID
-	_, err := io.ReadFull(rander, uuid[:])
+	uuidV4, err := NewV4()
 	if err != nil {
 		panic(err)
+	}
+	fmt.Print(uuidV4)
+}
+
+func NewV4() (uuid UUID, err error) {
+	rander := rand.Reader
+	_, err = io.ReadFull(rander, uuid[:])
+	if err != nil {
+		return
 	}
 	uuid[6] = (uuid[6] & 0x0f) | 0x40 // 46~50bit にバージョン情報を挿入
 	// input  | x x x x x x x x |
@@ -28,7 +35,7 @@ func main() {
 	// | 0x40 | 1 0 0 0 0 0 0 0 |
 	// output | 1 0 x x x x x x |
 
-	fmt.Print(uuid)
+	return
 }
 
 func (uuid UUID) encodeHex(dst []byte) {
