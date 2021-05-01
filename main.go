@@ -17,6 +17,15 @@ func main() {
 	fmt.Print(uuidV4)
 }
 
+func NewV1() (uuid UUID, err error) {
+	rander := rand.Reader
+	_, err = io.ReadFull(rander, uuid[:])
+	if err != nil {
+		return
+	}
+	return
+}
+
 func NewV4() (uuid UUID, err error) {
 	rander := rand.Reader
 	_, err = io.ReadFull(rander, uuid[:])
