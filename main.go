@@ -39,7 +39,7 @@ func NewV1() (uuid UUID, err error) {
 	binary.BigEndian.PutUint32(uuid[0:], uint32(timestamp&0xffffffff))
 	// set time_mid
 	binary.BigEndian.PutUint16(uuid[4:], uint16((timestamp>>32)&0xffff))
-	// set time_hi_and_version
+	// set time_hi
 	binary.BigEndian.PutUint16(uuid[6:], uint16((timestamp>>48)&0xffff))
 
 	// set clk_seq_hi_res set clk_seq_low
@@ -80,6 +80,42 @@ func NewV4() (uuid UUID, err error) {
 	// | 0x40 | 1 0 0 0 0 0 0 0 |
 	// output | 1 0 x x x x x x |
 
+	return
+}
+
+func NewV6() (uuid UUID, err error) {
+	var gregorianBeginTime time.Time
+	gregorianBeginTime, err = time.Parse(time.RFC3339, "1582-10-15T00:00:00Z")
+	if err != nil {
+		return
+	}
+
+	timestamp := time.Since(gregorianBeginTime).Nanoseconds() / 100
+	// set time_low
+	binary.BigEndian.PutUint32(uuid[0:], uint32(timestamp&0xffffffff))
+	// set time_mid
+	binary.BigEndian.PutUint16(uuid[4:], uint16((timestamp>>32)&0xffff))
+	// set time_hi_and_version
+	timHighAndVersion := ((timestamp >> 48) & 0x0fff) | 0x6000
+	binary.BigEndian.PutUint16(uuid[6:], uint16(timHighAndVersion))
+
+	// set clk_seq_hi_res set clk_seq_low
+	rander := rand.Reader
+	var b [2]byte
+	if _, err = io.ReadFull(rander, b[:]); err != nil {
+		return
+	}
+	seq := int(b[0])<<8 | int(b[1])
+	clockSeq := uint16(seq&0x3fff) | 0x8000
+	binary.BigEndian.PutUint16(uuid[8:], clockSeq)
+
+	// set macadd for 81~127
+	macAddres, err := getMacAddr()
+	if err != nil {
+		return
+	}
+	node := randomChoiceByteArray(macAddres)[:]
+	copy(uuid[10:], node[:])
 	return
 }
 
